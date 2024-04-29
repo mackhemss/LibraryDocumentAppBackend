@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Document App</title>
+</head>
+<body>
+    <h1>Library Document App</h1>
+
+    <!-- Form to add a new book -->
+    <form id="addBookForm">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required>
+        <label for="author">Author:</label>
+        <input type="text" id="author" name="author" required>
+        <button type="submit">Add Book</button>
+    </form>
+
+    <!-- List to display existing books -->
+    <ul id="bookList"></ul>
+
+    <script>
+        // Function to fetch books from backend and display them
+        function fetchBooks() {
+            fetch('/books')
+                .then(response => response.json())
+                .then(data => {
+                    const bookList = document.getElementById('bookList');
+                    bookList.innerHTML = '';
+                    data.forEach((book, index) => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `${book.title} by ${book.author}`;
+                        const removeButton = document.createElement('button');
+                        removeButton.textContent = 'Remove';
+                        removeButton.addEventListener('click', () => removeBook(index));
+                        listItem.appendChild(removeButton);
+                        bookList.appendChild(listItem);
+                    });
+                });
+        }
+
+        // Function to add a new book
+        function addBook(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const bookData = {};
+            formData.forEach((value, key) => {
+                bookData[key] = value;
+            });
+
+            fetch('/books', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(bookData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+                form.reset();
+                fetchBooks();
+            });
+        }
+
+        // Function to remove a book
+        function removeBook(index) {
+            fetch(`/books/${index}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+                fetchBooks();
+            });
+        }
+
+        // Fetch books on page load
+        document.addEventListener('DOMContentLoaded', fetchBooks);
+
+        // Add event listener to addBookForm
+        document.getElementById('addBookForm').addEventListener('submit', addBook);
+    </script>
+</body>
+</html>
